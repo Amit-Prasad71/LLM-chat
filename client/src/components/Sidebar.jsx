@@ -4,7 +4,7 @@ import ChatListItem from './ChatListItem.jsx';
 
 function Sidebar({ isSidebarOpen, setIsSidebarOpen, previousChats, handleNewChat, formatDate }) {
 	return (
-		<div className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-black border-r border-white/10 transition-all duration-300 overflow-hidden flex flex-col`}>
+		<div className={`${isSidebarOpen ? 'w-60' : 'w-0'} bg-black border-r border-white/10 transition-all duration-300 overflow-hidden flex flex-col`}>
 			<div className="p-4 border-b border-white/10">
 				<button
 					onClick={() => setIsSidebarOpen(false)}

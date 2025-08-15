@@ -4,11 +4,16 @@ import ChatMessages from './components/ChatMessages.jsx';
 import InputForm from './components/InputForm.jsx';
 
 function App() {
+    const preamble = {
+        role: "system",
+        content: "You are a friendly chatbot"
+    }
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [selectedModel, setSelectedModel] = useState({ id: 'gpt-4', name: 'GPT-4' });
     const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 
     // Sample previous chats
     const [previousChats] = useState([
@@ -39,26 +44,86 @@ function App() {
     ];
 
     const handleNewChat = () => {
-        setMessages([]);
+        setMessages([preamble]);
         setInput('');
     };
 
-    const handleSubmit = (e) => {
+    const callApi = async (messages) => {
+        let requestBody = {
+            messages: messages,
+            max_new_tokens: 1000,
+            temperature: 0.7,
+            top_k: 50,
+            top_p: 0.95,
+            do_sample: true,
+            new: false,
+            model: "llama3.2"
+        }
+        try {
+            const response = await fetch('http://192.168.0.120:5000/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+            const data = await response.json(); // This will parse the response body into JSON.
+            console.log("Response: ", data.response);
+            return data.response;
+        } catch (e) {
+            console.log("Error: ", e);
+            return "ERROR"
+        }
+
+    }
+
+    const callDeepSeekApi = async (messages) => {
+        let requestBody = {
+            messages: messages,
+            max_new_tokens: 1000,
+            temperature: 0.7
+        }
+        try {
+            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+            const data = await response.json(); // This will parse the response body into JSON.
+            console.log("Response: ", data.response);
+            return data.response;
+        } catch (e) {
+            console.log("Error: ", e);
+            return "ERROR"
+        }
+
+    }
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
 
         const newMessage = { role: 'user', content: input };
-        setMessages([...messages, newMessage]);
+        const updatedMessages = [...messages, newMessage]
+        setMessages(updatedMessages);
 
         // Simulate AI response
-        setTimeout(() => {
-            const aiResponse = {
-                role: 'assistant',
-                content: `This is a simulated response using ${selectedModel.name}. Replace this with actual API integration.`
-            };
-            setMessages(prev => [...prev, aiResponse]);
-        }, 1000);
+        // setTimeout(() => {
+        //     const aiResponse = {
+        //         role: 'assistant',
+        //         content: `This is a simulated response using ${selectedModel.name}. Replace this with actual API integration.`
+        //     };
+        //     setMessages(prev => [...prev, aiResponse]);
+        // }, 1000);
 
+        const aiResponse = await callApi([preamble, ...updatedMessages]);
+        let requiredAIResponse = {
+            role: 'assistant',
+            content: `${aiResponse}`
+        };
+        setMessages(prev => [...prev, requiredAIResponse])
         setInput('');
     };
 
@@ -70,21 +135,27 @@ function App() {
     };
 
     return (
-        <Layout
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-            previousChats={previousChats}
-            handleNewChat={handleNewChat}
-            formatDate={formatDate}
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
-            isModelDropdownOpen={isModelDropdownOpen}
-            setIsModelDropdownOpen={setIsModelDropdownOpen}
-            models={models}
-        >
-            <ChatMessages messages={messages} />
-            <InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} />
-        </Layout>
+
+        <div className='bg-black'>
+            <Layout
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
+                isRightSidebarOpen={isRightSidebarOpen}
+                setIsRightSidebarOpen={setIsRightSidebarOpen}
+                previousChats={previousChats}
+                handleNewChat={handleNewChat}
+                formatDate={formatDate}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+                isModelDropdownOpen={isModelDropdownOpen}
+                setIsModelDropdownOpen={setIsModelDropdownOpen}
+                models={models}
+            >
+                <ChatMessages messages={messages} />
+                <InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} />
+            </Layout>
+        </div>
+
     );
 }
 

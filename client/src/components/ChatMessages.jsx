@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, User } from 'lucide-react';
 import Message from './Message.jsx';
+import StaggeredText from './StaggeredText.jsx';
 
 function ChatMessages({ messages }) {
 	return (
@@ -8,8 +9,8 @@ function ChatMessages({ messages }) {
 			<div className="max-w-4xl mx-auto space-y-4">
 				{messages.length === 0 ? (
 					<div className="text-center py-8">
-						<h2 className="text-2xl font-bold text-white mb-2">Good Morning, John!</h2>
-						<p className="text-white/60">How can I assist you today?</p>
+						<StaggeredText text="Hello!" />
+						<p className="text-white/60">How may I assist you today?</p>
 					</div>
 				) : (
 					messages.map((message, index) => (

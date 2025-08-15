@@ -13,10 +13,10 @@ function ChatListItem({ chat, formatDate, onChatSelect }) {
 				<div className="flex justify-between items-start">
 					<h3 className="font-medium text-white truncate">{chat.title}</h3>
 					<span className="text-xs text-white/40 whitespace-nowrap ml-2">
-            {formatDate(chat.timestamp)}
-          </span>
+						{formatDate(chat.timestamp)}
+					</span>
 				</div>
-				<p className="text-sm text-white/60 truncate">{chat.preview}</p>
+				{/* <p className="text-sm text-white/60 truncate">{chat.preview}</p> */}
 			</div>
 		</button>
 	);
