@@ -14,26 +14,27 @@ function App() {
     const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // Sample previous chats
-    const [previousChats] = useState([
+    const [previousChats, setPreviousChats] = useState([
         {
             id: '1',
-            title: 'Website Development Discussion',
-            preview: 'Can you help me build a React website?',
+            title: 'Chat - 1',
             timestamp: new Date('2024-03-10T10:00:00'),
+            messages: [],
         },
         {
             id: '2',
-            title: 'AI Integration Questions',
-            preview: 'How do I integrate GPT-4 into my app?',
+            title: 'Chat - 2',
             timestamp: new Date('2024-03-09T15:30:00'),
+            messages: [],
         },
         {
             id: '3',
-            title: 'Code Review Session',
-            preview: 'Could you review my TypeScript code?',
+            title: 'Chat - 3',
             timestamp: new Date('2024-03-08T09:15:00'),
+            messages: [],
         },
     ]);
 
@@ -44,7 +45,16 @@ function App() {
     ];
 
     const handleNewChat = () => {
-        setMessages([preamble]);
+        const currentChatId = (previousChats.length + 1).toString()
+        const currentChat = {
+            id: currentChatId,
+            title: `Chat - ${currentChatId}`,
+            timestamp: new Date(),
+            messages: messages,
+        }
+        previousChats.push(currentChat)
+        setMessages([]);
+        setPreviousChats(previousChats)
         setInput('');
     };
 
@@ -104,11 +114,14 @@ function App() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
-
+        let updatedMessages = messages
         const newMessage = { role: 'user', content: input };
-        const updatedMessages = [...messages, newMessage]
+        //for loading UI
+        const emptyResponse = { role: 'assistant', content: '' };
+        updatedMessages.push(newMessage)
+        updatedMessages.push(emptyResponse)
         setMessages(updatedMessages);
-
+        setInput('');
         // Simulate AI response
         // setTimeout(() => {
         //     const aiResponse = {
@@ -117,14 +130,17 @@ function App() {
         //     };
         //     setMessages(prev => [...prev, aiResponse]);
         // }, 1000);
-
+        setLoading(true)
         const aiResponse = await callApi([preamble, ...updatedMessages]);
         let requiredAIResponse = {
             role: 'assistant',
             content: `${aiResponse}`
         };
-        setMessages(prev => [...prev, requiredAIResponse])
-        setInput('');
+        updatedMessages.pop()
+        updatedMessages.push(requiredAIResponse)
+        setLoading(false)
+        // setMessages(prev => [...prev, requiredAIResponse])
+        setMessages(updatedMessages)
     };
 
     const formatDate = (date) => {
@@ -151,7 +167,7 @@ function App() {
                 setIsModelDropdownOpen={setIsModelDropdownOpen}
                 models={models}
             >
-                <ChatMessages messages={messages} />
+                <ChatMessages messages={messages} loading={loading} />
                 <InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} />
             </Layout>
         </div>

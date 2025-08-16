@@ -1,19 +1,30 @@
 import React from 'react';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, Copy } from 'lucide-react';
 
-function Message({ message }) {
+function Message({ message, loading }) {
+	const copyToClipboard = () => {
+		navigator.clipboard.writeText(message.content);
+	};
+	const isAssistantMessageLoading = loading && message.role === 'assistant' && message.content === ''
 	return (
-		<div
-			className={` ${message.role !== 'assistant' ? 'bg-white/10' : 'bg-black'
-				} rounded-lg p-4`}
-		>
-			{message.role === 'assistant' ? (
-				<Bot className="w-6 h-6 mb-4 text-white" />
-			) : (
-				<User className="w-6 h-6 text-white/60" />
-			)}
-			<div className="flex-1">
-				<p className="text-white">{message.content}</p>
+
+		<div className={`group pb-8 flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>
+
+			<div
+				className={` ${message.role !== 'assistant' ? 'bg-white/10 max-w-lg break-words' : 'bg-black w-full'
+					} rounded-lg`}
+			>
+				<div className="relative flex-1">
+					<p className="text-white p-4">{message.content}</p>
+					{!isAssistantMessageLoading &&
+						<button
+							onClick={copyToClipboard}
+							className="absolute left-0 m-1 hidden group-hover:block group-focus-within:block p-1 rounded bg-black hover:bg-white/20"
+						>
+							<Copy className=" w-4 h-4 text-white" />
+						</button>
+					}
+				</div>
 			</div>
 		</div>
 	);
