@@ -1,8 +1,8 @@
 import React from 'react';
-import { X, Plus, MessageSquare } from 'lucide-react';
+import { X, Plus, MessageCircle } from 'lucide-react';
 import ChatListItem from './ChatListItem.jsx';
 
-function Sidebar({ isSidebarOpen, setIsSidebarOpen, previousChats, handleNewChat, formatDate }) {
+function Sidebar({ isSidebarOpen, setIsSidebarOpen, previousChats, handleNewChat, formatDate, onChatSelect }) {
 	return (
 		<div className={`${isSidebarOpen ? 'w-60' : 'w-0'} bg-black border-r border-white/10 transition-all duration-300 overflow-hidden flex flex-col`}>
 			<div className="p-4 border-b border-white/10">
@@ -20,9 +20,14 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen, previousChats, handleNewChat
 					<span>New Chat</span>
 				</button>
 			</div>
+			<div className='flex p-4 gap-2'>
+				<p className='text-white/50 text-sm'>Chats</p>
+				<MessageCircle className="w-3 h-3 text-white/60 mt-1" />
+			</div>
+
 			<div className="flex-1 overflow-y-auto">
 				{previousChats.map((chat) => (
-					<ChatListItem key={chat.id} chat={chat} formatDate={formatDate} />
+					<ChatListItem key={chat.id} chat={chat} formatDate={formatDate} onChatSelect={onChatSelect} />
 				))}
 			</div>
 		</div>

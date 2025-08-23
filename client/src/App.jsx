@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Layout from './components/Layout.jsx';
 import ChatMessages from './components/ChatMessages.jsx';
 import InputForm from './components/InputForm.jsx';
+import { BrowserRouter, Routes, Route, Link, useNavigate, useParams } from "react-router-dom";
+
 
 function App() {
     const preamble = {
@@ -65,12 +67,14 @@ function App() {
             temperature: 0.7,
             top_k: 50,
             top_p: 0.95,
+            stop_sequence: ["\n"],
+            stream: false,
             do_sample: true,
             new: false,
             model: "llama3.2"
         }
         try {
-            const response = await fetch('http://192.168.0.120:5000/api/chat', {
+            const response = await fetch('http://localhost:11434/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,8 +82,8 @@ function App() {
                 body: JSON.stringify(requestBody),
             });
             const data = await response.json(); // This will parse the response body into JSON.
-            console.log("Response: ", data.response);
-            return data.response;
+            console.log("Response: ", data);
+            return data;
         } catch (e) {
             console.log("Error: ", e);
             return "ERROR"
@@ -113,6 +117,9 @@ function App() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (loading) {
+            return
+        }
         if (!input.trim()) return;
         let updatedMessages = messages
         const newMessage = { role: 'user', content: input };
@@ -122,26 +129,26 @@ function App() {
         updatedMessages.push(emptyResponse)
         setMessages(updatedMessages);
         setInput('');
-        // Simulate AI response
-        // setTimeout(() => {
-        //     const aiResponse = {
-        //         role: 'assistant',
-        //         content: `This is a simulated response using ${selectedModel.name}. Replace this with actual API integration.`
-        //     };
-        //     setMessages(prev => [...prev, aiResponse]);
-        // }, 1000);
         setLoading(true)
         const aiResponse = await callApi([preamble, ...updatedMessages]);
+        let errorMessage = 'Failed to reach server.'
         let requiredAIResponse = {
             role: 'assistant',
-            content: `${aiResponse}`
+            content: ''
         };
+        aiResponse !== 'ERROR' ? (requiredAIResponse.content = `${aiResponse.message.content}`) : (requiredAIResponse.content = errorMessage)
+
         updatedMessages.pop()
         updatedMessages.push(requiredAIResponse)
         setLoading(false)
-        // setMessages(prev => [...prev, requiredAIResponse])
         setMessages(updatedMessages)
     };
+
+    const onChatSelect = (chatId) => {
+        if (chatId) {
+            setMessages(previousChats[Number(chatId) - 1].messages)
+        }
+    }
 
     const formatDate = (date) => {
         return new Intl.DateTimeFormat('en-US', {
@@ -166,9 +173,10 @@ function App() {
                 isModelDropdownOpen={isModelDropdownOpen}
                 setIsModelDropdownOpen={setIsModelDropdownOpen}
                 models={models}
+                onChatSelect={onChatSelect}
             >
                 <ChatMessages messages={messages} loading={loading} />
-                <InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} />
+                <InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} />
             </Layout>
         </div>
 

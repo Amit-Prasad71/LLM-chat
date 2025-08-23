@@ -39,6 +39,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								<option value="" disabled hidden className='text-gray-400'>Select a provider</option>
 								<option value="deepseek" className="bg-black text-white">Deepseek </option>
 								<option value="gpt4o" className="bg-black text-white">GPT-4o</option>
+								<option value="ollama" className="bg-black text-white">Ollama</option>
 							</select>
 						</div>
 

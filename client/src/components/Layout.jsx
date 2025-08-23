@@ -16,6 +16,7 @@ function Layout({
 	setSelectedModel,
 	isModelDropdownOpen,
 	setIsModelDropdownOpen,
+	onChatSelect,
 	models,
 }) {
 	return (
@@ -26,6 +27,7 @@ function Layout({
 				previousChats={previousChats}
 				handleNewChat={handleNewChat}
 				formatDate={formatDate}
+				onChatSelect={onChatSelect}
 			/>
 			<div className="flex-1 flex flex-col">
 				<Header

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bot, User, Copy } from 'lucide-react';
+import MarkdownRenderer from './MarkdownRenderer';
 
 function Message({ message, loading }) {
 	const copyToClipboard = () => {
@@ -15,7 +16,9 @@ function Message({ message, loading }) {
 					} rounded-lg`}
 			>
 				<div className="relative flex-1">
-					<p className="text-white p-4">{message.content}</p>
+					{message.role === 'user' && <p className="text-white p-4">{message.content}</p>}
+					{message.role === 'assistant' && <MarkdownRenderer content={message.content} />}
+
 					{!isAssistantMessageLoading &&
 						<button
 							onClick={copyToClipboard}

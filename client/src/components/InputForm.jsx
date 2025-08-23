@@ -1,7 +1,8 @@
 import React from 'react';
 import { Send } from 'lucide-react';
+import LoaderDots from './LoaderDots';
 
-function InputForm({ input, setInput, handleSubmit }) {
+function InputForm({ input, setInput, handleSubmit, loading }) {
 	return (
 		<div className="border-t border-white/10 bg-black p-4">
 			<div className="max-w-4xl mx-auto">
@@ -17,8 +18,9 @@ function InputForm({ input, setInput, handleSubmit }) {
 						type="submit"
 						className="bg-white text-black rounded-lg px-6 py-2 hover:bg-white/90 transition-colors flex items-center space-x-2"
 					>
-						<span>Send</span>
-						<Send className="w-4 h-4" />
+						{!loading && <span>Send</span>}
+						{!loading ? <Send className="w-4 h-4" /> : <LoaderDots />}
+
 					</button>
 				</form>
 			</div>
