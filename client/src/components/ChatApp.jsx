@@ -184,7 +184,6 @@ export default function ChatApp() {
 				setSelectedModel={setSelectedModel}
 				isModelDropdownOpen={isModelDropdownOpen}
 				setIsModelDropdownOpen={setIsModelDropdownOpen}
-				models={models}
 				onChatSelect={onChatSelect}
 			>
 				<ChatMessages messages={messages} loading={loading} />
