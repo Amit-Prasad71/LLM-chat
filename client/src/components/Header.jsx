@@ -26,7 +26,9 @@ function Header({
 						</button>
 					)}
 					<div className="flex items-center space-x-2">
-						<h1 className="text-xl font-semibold text-white">AI Chat</h1>
+						<a href="/" className="text-xl font-semibold text-white">
+							AI Chat
+						</a>
 					</div>
 				</div>
 

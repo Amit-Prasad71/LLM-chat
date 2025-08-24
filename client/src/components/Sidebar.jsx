@@ -26,6 +26,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen, previousChats, handleNewChat
 			</div>
 
 			<div className="flex-1 overflow-y-auto">
+				{previousChats.length == 0 && <p className={`${!isSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/70 px-4 text-xs`}>Your chats will appear here. Create a new chat to get going.</p>}
 				{previousChats.map((chat) => (
 					<ChatListItem key={chat.id} chat={chat} formatDate={formatDate} onChatSelect={onChatSelect} />
 				))}
