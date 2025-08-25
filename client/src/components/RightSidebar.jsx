@@ -1,13 +1,54 @@
-import React from 'react';
-import { X, Plus, MessageSquare, LockKeyhole, Box, Book } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, Plus, MessageSquare, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeOff, EyeClosed } from 'lucide-react';
 import ChatListItem from './ChatListItem.jsx';
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
+
+	const providerOptions = {
+		'': {
+			'preamble': false,
+			'topK': false,
+			'topP': false,
+			'temp': false
+		},
+		'deepseek': {
+			'preamble': true,
+			'topK': true,
+			'topP': true,
+			'temp': true
+		},
+		'ollama': {
+			'preamble': true,
+			'topK': true,
+			'topP': true,
+			'temp': true
+		},
+		'gpt4o': {
+			'preamble': true,
+			'topK': true,
+			'topP': true,
+			'temp': true
+		},
+	}
+
 	const [temp, setTemp] = useState(0.7);
 	const [topP, setTopP] = useState(1);
 	const [topK, setTopK] = useState(50);
 	const [provider, setProvider] = useState("");
+	const [showSecret, setShowSecret] = useState(false)
+
+	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
+	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
+
+
+	const setAdvancedSettingsDisplay = () => {
+
+		setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)
+
+
+	}
 
 	return (
 		<div className={`${isRightSidebarOpen ? 'w-80' : 'w-0'} bg-black border-l border-white/10 transition-all duration-300 overflow-hidden`}>
@@ -44,105 +85,178 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 						</div>
 
 						<div>
-							<label htmlFor="apiKey" className="flex items-center gap-2 px-1 mb-1 text-white">
+							<label
+								htmlFor="apiKey"
+								className="flex items-center gap-2 px-1 text-white"
+							>
 								Secret
 								<LockKeyhole className="w-4 h-4 text-white/60" />
 							</label>
-							<input
-								id="apiKey"
-								type="password"
-								placeholder="Enter your API key"
-								className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
-							/>
+							<div className="relative group">
+								<input
+									id="apiKey"
+									type={showSecret ? "text" : "password"}
+									onChange={(e) => setIsSecretInputEmpty(!e.target.value)}
+									placeholder="Enter your API key"
+									className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+								/>
+								{!isSecretInputEmpty && <button
+									type="button"
+									onClick={() => setShowSecret(!showSecret)}
+									className="absolute inset-y-4 top-0 right-3 flex items-center text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+								>
+									{showSecret ? <EyeClosed className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+								</button>
+								}
+							</div>
 						</div>
+
 					</div>
-
-
-
-
-
-
 				</div>
 
 
+				{provider !== '' && (
+					<AnimatePresence>
+						<motion.div
+							initial={{ opacity: 0, height: 0 }}
+							animate={{ opacity: 1, height: "auto" }}
+							exit={{ opacity: 0, height: 0 }}
+							transition={{ duration: 0.4 }}
+							className='p-4 w-full border-t border-white/10'
+						>
+
+							<div className="flex items-center justify-between w-full mb-4">
+								<p className="text-gray-300 text-sm">Advanced Settings</p>
+								<button
+									onClick={() => setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)}
+								>
+									{isAdvancedSettingsOpen ? (
+										<ChevronUp className="w-4 h-4 text-white/60" />
+									) : (
+										<ChevronDown className="w-4 h-4 text-white/60" />
+									)}
+								</button>
+							</div>
 
 
+							{isAdvancedSettingsOpen && (
+								<motion.div
+									initial={{ opacity: 0, height: 0 }}
+									animate={{ opacity: 1, height: "auto" }}
+									exit={{ opacity: 0, height: 0 }}
+									transition={{ duration: 0.5 }}
+									className="overflow-hidden"
+								>
+									{provider === '' && (
+										<p className={`${!isSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/70 px-4 text-xs`}>Select a provider to acces</p>
+									)}
+
+									{providerOptions[provider].preamble && (
+										<motion.div
+											key="preamble"
+											initial={{ opacity: 0, y: 10 }}
+											animate={{ opacity: 1, y: 0 }}
+											exit={{ opacity: 0, y: 10 }}
+											transition={{ duration: 0.5 }}
+										>
+											<label htmlFor="preamble" className="flex items-center gap-2 px-1 mb-1 text-white">
+												Preamble
+												<Book className="w-4 h-4 text-white/60" />
+											</label>
+											<input
+												id="preamble"
+												type="text"
+												placeholder="Initial instructions here..."
+												className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+											/>
+										</motion.div>
+									)}
+
+									//temp slider
+									{providerOptions[provider].temp && (
+										<motion.div
+											key="temp-slider"
+											initial={{ opacity: 0, y: 10 }}
+											animate={{ opacity: 1, y: 0 }}
+											exit={{ opacity: 0, y: 10 }}
+											transition={{ duration: 0.5 }}
+										>
+											<label htmlFor="temp_slider" className="block text-white text-sm mb-1">
+												Temp: <span>{temp}</span>
+											</label>
+											<input
+												id="temp_slider"
+												type="range"
+												min="0"
+												max="1"
+												step="0.1"
+												value={temp}
+												onChange={(e) => setTemp(parseFloat(e.target.value))}
+												className="w-full accent-white"
+											/>
+										</motion.div>
+									)}
 
 
+									// topP slider
+									{providerOptions[provider].topP && (
+										<motion.div
+											key="topP_slider"
+											initial={{ opacity: 0, y: 10 }}
+											animate={{ opacity: 1, y: 0 }}
+											exit={{ opacity: 0, y: 10 }}
+											transition={{ duration: 0.5 }}
+										>
+											<label htmlFor="topP_slider" className="block text-white text-sm mb-1">
+												TopP: <span>{topP}</span>
+											</label>
+											<input
+												id="topP_slider"
+												type="range"
+												min="0"
+												max="1"
+												step="0.1"
+												value={topP}
+												onChange={(e) => setTopP(parseFloat(e.target.value))}
+												className="w-full accent-white"
+											/>
+										</motion.div>
+									)}
 
 
+									//topK slider
+									{providerOptions[provider].topK && (
+										<motion.div
+											key="topK_slider"
+											initial={{ opacity: 0, y: 10 }}
+											animate={{ opacity: 1, y: 0 }}
+											exit={{ opacity: 0, y: 10 }}
+											transition={{ duration: 0.2 }}
+										>
+											<label htmlFor="topK_slider" className="block text-white mb-1 text-sm">
+												TopK: <span>{topK}</span>
+											</label>
+											<input
+												id="topK_slider"
+												type="range"
+												min="0"
+												max="1000"
+												step="1"
+												value={topK}
+												onChange={(e) => setTopK(parseFloat(e.target.value))}
+												className="w-full accent-white"
+											/>
+										</motion.div>
+									)}
 
-				<div className='p-4 w-full border-t border-white/10'>
+								</motion.div>
+							)}
 
-					<p className='text-gray-300 text-sm mb-4'>Advanced Settings</p>
-
-					<div>
-						<label htmlFor="preamble" className="flex items-center gap-2 px-1 mb-1 text-white">
-							Preamble
-							<Book className="w-4 h-4 text-white/60" />
-							<span className='text-white/70 text-xs'>(Optional)</span>
-						</label>
-						<input
-							id="preamble"
-							type="text"
-							placeholder="Initial instructions here..."
-							className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
-						/>
-					</div>
-
-					<div>
-						<label htmlFor="temp_slider" className="block text-white mb-2 mt-2">
-							Temp: <span>{temp}</span>
-						</label>
-						<input
-							id="mySlider"
-							type="range"
-							min="0"
-							max="1"
-							step="0.1"
-							value={temp}
-							onChange={(e) => setTemp(parseFloat(e.target.value))}
-							className="w-full accent-white"
-						/>
-					</div>
-					<div>
-						<label htmlFor="topP_slider" className="block text-white mb-2 mt-2">
-							TopP: <span>{topP}</span>
-						</label>
-						<input
-							id="topP_slider"
-							type="range"
-							min="0"
-							max="1"
-							step="0.1"
-							value={topP}
-							onChange={(e) => setTopP(parseFloat(e.target.value))}
-							className="w-full accent-white"
-						/>
-					</div>
-					<div>
-						<label htmlFor="topK_slider" className="block text-white mb-2 mt-2">
-							TopK: <span>{topK}</span>
-						</label>
-						<input
-							id="topK_slider"
-							type="range"
-							min="0"
-							max="1000"
-							step="1"
-							value={topK}
-							onChange={(e) => setTopK(parseFloat(e.target.value))}
-							className="w-full accent-white"
-						/>
-					</div>
+						</motion.div>
+					</AnimatePresence>
+				)}
 
 
-
-
-
-
-
-				</div>
 
 
 
