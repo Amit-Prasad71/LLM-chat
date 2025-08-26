@@ -3,6 +3,7 @@ import { X, Plus, MessageSquare, LockKeyhole, Box, Book, ChevronUp, ChevronDown,
 import ChatListItem from './ChatListItem.jsx';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useModelContext } from '../context/ModelContext.jsx';
 
 function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
@@ -41,6 +42,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
+	const {setModel, setKey} = useModelContext()
 
 
 	const setAdvancedSettingsDisplay = () => {
@@ -48,6 +50,16 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 		setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)
 
 
+	}
+
+	const handleSecretInput = (key) => {
+		setIsSecretInputEmpty(!key)
+		setKey(key)
+	}
+
+	const handleProvider = (provider) => {
+		setProvider(provider)
+		setModel(provider)
 	}
 
 	return (
@@ -71,17 +83,21 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								Provider
 								<Box className="w-4 h-4 text-white/60" />
 							</label>
-							<select
-								id="llm-provider"
-								value={provider}
-								onChange={(e) => setProvider(e.target.value)}
-								className={`px-3 py-2 pr-8 w-full bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors ${provider === "" ? 'text-gray-400' : 'text-white'}`}
-							>
-								<option value="" disabled hidden className='text-white/50'>Select a provider</option>
-								<option value="deepseek" className="bg-black text-white">Deepseek </option>
-								<option value="gpt4o" className="bg-black text-white">GPT-4o</option>
-								<option value="ollama" className="bg-black text-white">Ollama</option>
-							</select>
+							<div className='relative'>
+								<select
+									id="llm-provider"
+									value={provider}
+									onChange={(e) => handleProvider(e.target.value)}
+									className={`appearance-none px-3 py-2 pr-8 w-full bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors ${provider === "" ? 'text-gray-400' : 'text-white'}`}
+								>
+									<option value="" disabled hidden className='text-white/50'>Select a provider</option>
+									<option value="deepseek-chat" className="bg-black text-white">Deepseek </option>
+									<option value="gpt4o" className="bg-black text-white">GPT-4o</option>
+									<option value="ollama" className="bg-black text-white">Ollama</option>
+								</select>
+								<ChevronDown className="w-4 h-4 absolute top-3.5 right-3 text-white/60 "/>
+							</div>
+							
 						</div>
 
 						<div>
@@ -96,7 +112,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								<input
 									id="apiKey"
 									type={showSecret ? "text" : "password"}
-									onChange={(e) => setIsSecretInputEmpty(!e.target.value)}
+									onChange={(e) => handleSecretInput(e.target.value)}
 									placeholder="Enter your API key"
 									className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
 								/>
@@ -125,11 +141,9 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 							className='p-4 w-full border-t border-white/10'
 						>
 
-							<div className="flex items-center justify-between w-full mb-4">
+							<div className="flex items-center justify-between w-full mb-4" onClick={() => setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)}>
 								<p className="text-gray-300 text-sm">Advanced Settings</p>
-								<button
-									onClick={() => setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)}
-								>
+								<button>
 									{isAdvancedSettingsOpen ? (
 										<ChevronUp className="w-4 h-4 text-white/60" />
 									) : (

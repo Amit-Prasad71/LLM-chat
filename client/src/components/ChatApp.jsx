@@ -3,6 +3,7 @@ import Layout from './Layout.jsx';
 import ChatMessages from './ChatMessages.jsx';
 import InputForm from './InputForm.jsx';
 import { useNavigate, useParams } from 'react-router-dom'
+import { useModelContext } from '../context/ModelContext.jsx';
 
 export default function ChatApp() {
 
@@ -21,6 +22,7 @@ export default function ChatApp() {
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
+	const {model, key} = useModelContext();
 
 	useEffect(() => {
 		if (chatId) {
@@ -84,15 +86,18 @@ export default function ChatApp() {
 		let requestBody = {
 			messages: messages,
 			max_new_tokens: 1000,
-			temperature: 0.7
+			temperature: 0.7,
+			model: model
 		}
 		try {
 			const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${key}`
 				},
 				body: JSON.stringify(requestBody),
+				redirect: "follow"
 			});
 			const data = await response.json(); // This will parse the response body into JSON.
 			console.log("Response: ", data.response);
@@ -102,6 +107,13 @@ export default function ChatApp() {
 			return "ERROR"
 		}
 
+	}
+	const  makeAPIcall = async (preamble,updatedMessages) =>  {
+		if(model === "deepseek-chat") {
+			callDeepSeekApi(updatedMessages)
+		} else if(model === "ollama") {
+			callApi([preamble, ...updatedMessages])
+		}
 	}
 
 	const handleSubmit = async (e) => {
