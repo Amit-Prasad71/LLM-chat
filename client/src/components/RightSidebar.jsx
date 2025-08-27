@@ -1,6 +1,4 @@
-import React, { useEffect } from 'react';
-import { X, Plus, MessageSquare, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeOff, EyeClosed } from 'lucide-react';
-import ChatListItem from './ChatListItem.jsx';
+import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye,  EyeClosed, Bot } from 'lucide-react';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModelContext } from '../context/ModelContext.jsx';
@@ -14,7 +12,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 			'topP': false,
 			'temp': false
 		},
-		'deepseek': {
+		'deepseek-chat': {
 			'preamble': true,
 			'topK': true,
 			'topP': true,
@@ -34,15 +32,13 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 		},
 	}
 
-	const [temp, setTemp] = useState(0.7);
-	const [topP, setTopP] = useState(1);
-	const [topK, setTopK] = useState(50);
+	
 	const [provider, setProvider] = useState("");
 	const [showSecret, setShowSecret] = useState(false)
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const { setModel, setKey } = useModelContext()
+	const { setModel, setKey, setOllamaModel, setTemp, setTopK, setTopP, temp, topK, topP } = useModelContext()
 
 
 	const handleSecretInput = (key) => {
@@ -120,6 +116,27 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 							</div>
 						</div>
 
+						{provider === 'ollama' && (
+							<div>
+								<label
+									htmlFor="ollamaModel"
+									className="flex items-center gap-2 px-1 text-white"
+								>
+									Model
+									<Bot className="w-4 h-4 text-white/60" />
+								</label>
+								<div className="relative group">
+									<input
+										id="ollamaModel"
+										type="text"
+										onChange={(e) => setOllamaModel(e.target.value)}
+										placeholder="Enter model"
+										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+									/>
+								</div>
+							</div>
+						)}
+
 					</div>
 				</div>
 
@@ -170,16 +187,15 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 												Preamble
 												<Book className="w-4 h-4 text-white/60" />
 											</label>
-											<input
+											<textarea
 												id="preamble"
 												type="text"
 												placeholder="Initial instructions here..."
-												className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+												className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30 custom-scrollbar-hide"
+												style={{ minHeight: "20px", maxHeight: "120px", overflowY: "auto" }}
 											/>
 										</motion.div>
 									)}
-
-									//temp slider
 									{providerOptions[provider].temp && (
 										<motion.div
 											key="temp-slider"
@@ -188,9 +204,10 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 											exit={{ opacity: 0, y: 10 }}
 											transition={{ duration: 0.5 }}
 										>
-											<label htmlFor="temp_slider" className="block text-white text-sm mb-1">
-												Temp: <span>{temp}</span>
-											</label>
+											<div className='flex justify-between'>
+												<label htmlFor="temp_slider" className="text-white/80 mb-2 text-sm">Temp</label>
+												<p className='text-white/80 mb-2 text-sm'>{temp}</p>
+											</div>
 											<input
 												id="temp_slider"
 												type="range"
@@ -199,13 +216,12 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 												step="0.1"
 												value={temp}
 												onChange={(e) => setTemp(parseFloat(e.target.value))}
-												className="w-full accent-white"
+												className="w-full accent-white mb-4 opacity-50"
 											/>
 										</motion.div>
 									)}
 
 
-									// topP slider
 									{providerOptions[provider].topP && (
 										<motion.div
 											key="topP_slider"
@@ -214,9 +230,10 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 											exit={{ opacity: 0, y: 10 }}
 											transition={{ duration: 0.5 }}
 										>
-											<label htmlFor="topP_slider" className="block text-white text-sm mb-1">
-												TopP: <span>{topP}</span>
-											</label>
+											<div className='flex justify-between'>
+												<label htmlFor="topP_slider" className="text-white/80 mb-2 text-sm">TopP</label>
+												<p className='text-white/80 mb-2 text-sm'>{topP}</p>
+											</div>
 											<input
 												id="topP_slider"
 												type="range"
@@ -225,13 +242,12 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 												step="0.1"
 												value={topP}
 												onChange={(e) => setTopP(parseFloat(e.target.value))}
-												className="w-full accent-white"
+												className="w-full accent-white mb-4 opacity-50"
 											/>
 										</motion.div>
 									)}
 
 
-									//topK slider
 									{providerOptions[provider].topK && (
 										<motion.div
 											key="topK_slider"
@@ -240,9 +256,11 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 											exit={{ opacity: 0, y: 10 }}
 											transition={{ duration: 0.2 }}
 										>
-											<label htmlFor="topK_slider" className="block text-white mb-1 text-sm">
-												TopK: <span>{topK}</span>
-											</label>
+											
+											<div className='flex justify-between'>
+												<label htmlFor="topK_slider" className="text-white/80 mb-2 text-sm">TopK</label>
+												<p className='text-white/80 mb-2 text-sm'>{topK}</p>
+											</div>
 											<input
 												id="topK_slider"
 												type="range"
@@ -251,7 +269,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 												step="1"
 												value={topK}
 												onChange={(e) => setTopK(parseFloat(e.target.value))}
-												className="w-full accent-white"
+												className="w-full accent-white mb-4 opacity-50"
 											/>
 										</motion.div>
 									)}

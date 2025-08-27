@@ -4,6 +4,8 @@ import ChatMessages from './ChatMessages.jsx';
 import InputForm from './InputForm.jsx';
 import { useNavigate, useParams } from 'react-router-dom'
 import { useModelContext } from '../context/ModelContext.jsx';
+import { useError } from '../context/ErrorContext.jsx';
+import ErrorToast from './ErrorToast.jsx';
 
 export default function ChatApp() {
 
@@ -23,6 +25,7 @@ export default function ChatApp() {
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
 	const { model, key } = useModelContext();
+	const {isOpen, message, setIsOpen} = useError();
 
 	useEffect(() => {
 		if (chatId) {
@@ -297,6 +300,7 @@ export default function ChatApp() {
 				<ChatMessages messages={messages} loading={loading} />
 				<InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} />
 			</Layout>
+			<ErrorToast isOpen={isOpen} message={message} onClose={() => setIsOpen(false)}/>
 		</div>
 	)
 }

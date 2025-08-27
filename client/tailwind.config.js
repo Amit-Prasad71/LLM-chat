@@ -20,11 +20,16 @@ export default {
           '0%, 80%, 100%': { transform: 'translateY(0)' },
           '40%': { transform: 'translateY(-0.15rem)' }, // very small lift (~2.5px)
         },
+        fadeIn: {
+          "0%": { opacity: 0, transform: "translateY(20px)" },
+          "100%": { opacity: 1, transform: "translateY(0)" },
+        },
       },
       animation: {
         fade: "fade 0.3s ease forwards",
         reveal: "reveal 0.35s ease forwards",
         'bounce-messenger': 'bounce-messenger 1.4s infinite ease-in-out',
+        fadeIn: "fadeIn 0.3s ease-out",
       },
     },
   },

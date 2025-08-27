@@ -6,3 +6,15 @@ body {
     /* @apply font-jetbrains-mono; */
     @apply font-hostgrotesk;
 }
+
+/* Hide scrollbar for textarea with this class */
+.custom-scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-scrollbar-hide {
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+}
