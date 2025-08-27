@@ -2,11 +2,11 @@ import React from 'react';
 import { Bot, User, Copy } from 'lucide-react';
 import MarkdownRenderer from './MarkdownRenderer';
 
-function Message({ message, loading }) {
+function Message({ messageIndex, message, loading, endIndex }) {
 	const copyToClipboard = () => {
 		navigator.clipboard.writeText(message.content);
 	};
-	const isAssistantMessageLoading = loading && message.role === 'assistant' && message.content === ''
+	const isAssistantMessageLoading = loading && message.role === 'assistant' && messageIndex === endIndex
 	return (
 
 		<div className={`group pb-8 flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}>

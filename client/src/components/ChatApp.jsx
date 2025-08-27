@@ -22,7 +22,7 @@ export default function ChatApp() {
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
-	const {model, key} = useModelContext();
+	const { model, key } = useModelContext();
 
 	useEffect(() => {
 		if (chatId) {
@@ -108,67 +108,163 @@ export default function ChatApp() {
 		}
 
 	}
-	const  makeAPIcall = async (preamble,updatedMessages) =>  {
-		if(model === "deepseek-chat") {
+	const callStreamApi = async (messages, onStreamChunk) => {
+
+		let requestBody = {
+			messages: messages,
+			max_new_tokens: 1000,
+			temperature: 0.7,
+			top_k: 50,
+			top_p: 0.95,
+			stop_sequence: ["\n"],
+			stream: true,
+			do_sample: true,
+			new: false,
+			model: "llama3.2",
+		}
+
+		const response = await fetch('http://localhost:11434/api/chat', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(requestBody),
+		});
+
+
+		if (!response.body) {
+			throw new Error("ERROR");
+		}
+
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder("utf-8");
+
+		let buffer = "";
+
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+
+			// split into lines (JSONL)
+			const lines = buffer.split("\n");
+			buffer = lines.pop(); // keep last line in case it's incomplete
+
+			for (const line of lines) {
+				if (!line.trim()) continue;
+
+				let data;
+				try {
+					data = JSON.parse(line);
+				} catch (err) {
+					console.error("JSON parse error:", err, line);
+					continue;
+				}
+
+				if (data.message?.content) {
+					onStreamChunk(data.message.content); // now safe
+				}
+
+				if (data.done) {
+					return;
+				}
+			}
+		}
+
+	}
+
+	const makeAPIcall = async (preamble, updatedMessages) => {
+		if (model === "deepseek-chat") {
 			callDeepSeekApi(updatedMessages)
-		} else if(model === "ollama") {
+		} else if (model === "ollama") {
 			callApi([preamble, ...updatedMessages])
 		}
 	}
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		if (loading) {
-			return
-		}
+		if (loading) return;
 		if (!input.trim()) return;
 
-		let isNewChat = messages.length === 0
-
-		let updatedMessages = [...messages]
+		let isNewChat = messages.length === 0;
+		let updatedMessages = [...messages];
 		let updatedPreviousChats = [...previousChats];
 
 		if (isNewChat) {
-			const newChat = createChat((previousChats.length + 1).toString())
-			updatedPreviousChats.push(newChat)
-			setPreviousChats([...previousChats, newChat])
+			const newChat = createChat((previousChats.length + 1).toString());
+			updatedPreviousChats.push(newChat);
+			setPreviousChats([...previousChats, newChat]);
 		}
 
-		let currentChatId = isNewChat ? previousChats.length + 1 : Number(chatId)
+		let currentChatId = isNewChat ? previousChats.length + 1 : Number(chatId);
 
-		const newMessage = { role: 'user', content: input };
-		//for loading UI
-		const emptyResponse = { role: 'assistant', content: '' };
-		updatedMessages.push(newMessage)
-		updatedMessages.push(emptyResponse)
+		const newMessage = { role: "user", content: input };
+		const assistantMessage = { role: "assistant", content: "" }; // start empty
+
+		updatedMessages.push(newMessage);
+		updatedMessages.push(assistantMessage);
 		setMessages(updatedMessages);
-		if (isNewChat) {
-			navigate(`/c/${currentChatId}`)
-		}
-		updatedPreviousChats[currentChatId - 1] = {
-			...updatedPreviousChats[currentChatId - 1],
-			messages: updatedMessages
-		};
-		setPreviousChats(updatedPreviousChats)
-		setInput('');
-		setLoading(true)
-		const aiResponse = await callApi([preamble, ...updatedMessages]);
-		let errorMessage = 'Failed to reach server.'
-		let requiredAIResponse = {
-			role: 'assistant',
-			content: ''
-		};
-		aiResponse !== 'ERROR' ? (requiredAIResponse.content = `${aiResponse.message.content}`) : (requiredAIResponse.content = errorMessage)
 
-		updatedMessages.pop()
-		updatedMessages.push(requiredAIResponse)
+		if (isNewChat) {
+			navigate(`/c/${currentChatId}`);
+		}
+
 		updatedPreviousChats[currentChatId - 1] = {
 			...updatedPreviousChats[currentChatId - 1],
-			messages: updatedMessages
+			messages: updatedMessages,
 		};
+		setPreviousChats(updatedPreviousChats);
+		setInput("");
+		setLoading(true);
+
+		try {
+			await callStreamApi([preamble, ...updatedMessages], (chunk) => {
+				setMessages((prev) => {
+					const newMessages = [...prev]
+					const lastIndex = newMessages.length - 1
+
+					const updatedAssistantMessage = {
+						...newMessages[lastIndex],
+						content: newMessages[lastIndex].content + chunk,
+					}
+					newMessages[lastIndex] = updatedAssistantMessage
+					return newMessages
+				})
+
+
+				setPreviousChats((prevChats) => {
+					const newChats = [...prevChats];
+					const chatIndex = currentChatId - 1;
+
+					newChats[chatIndex] = {
+						...newChats[chatIndex],
+						messages: [
+							...newChats[chatIndex].messages.slice(0, -1),
+							{
+								...newChats[chatIndex].messages.at(-1),
+								content: newChats[chatIndex].messages.at(-1).content + chunk,
+							},
+						],
+					};
+
+					return newChats;
+				});
+			});
+		} catch (err) {
+			setMessages((prev) => {
+				const newMessages = [...prev]
+				const lastIndex = newMessages.length - 1
+
+				const updatedAssistantMessage = {
+					...newMessages[lastIndex],
+					content: "Failed to reach server"
+				}
+				newMessages[lastIndex] = updatedAssistantMessage
+				return newMessages
+			})
+		}
 		setLoading(false)
-		setMessages(updatedMessages)
-		setPreviousChats(updatedPreviousChats)
 	};
 
 	const onChatSelect = (chatId) => {

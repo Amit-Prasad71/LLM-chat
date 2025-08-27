@@ -6,14 +6,14 @@ import Loader from './Loader';
 
 function assistantLoading(loading) {
 	return (
-		<div className='flex ml-4 gap-4 mb-4'>
+		<div className='flex gap-4 mb-4'>
 			{loading && <Loader />}
 		</div>
 	)
 }
 
 function ChatMessages({ messages, loading }) {
-	// console.log(messages)
+	const endIndex = messages.length - 1
 	return (
 		<div className="flex-1 overflow-y-auto p-4 bg-black">
 			<div className="max-w-4xl mx-auto space-y-4">
@@ -25,7 +25,7 @@ function ChatMessages({ messages, loading }) {
 				) : (
 
 					messages.map((message, index) => (
-						<Message key={index} message={message} loading={loading} />
+						<Message key={index} messageIndex={index} message={message} loading={loading} endIndex={endIndex} />
 					))
 				)}
 				{messages.length !== 0 && assistantLoading(loading)}

@@ -42,15 +42,8 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const {setModel, setKey} = useModelContext()
+	const { setModel, setKey } = useModelContext()
 
-
-	const setAdvancedSettingsDisplay = () => {
-
-		setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)
-
-
-	}
 
 	const handleSecretInput = (key) => {
 		setIsSecretInputEmpty(!key)
@@ -95,9 +88,9 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									<option value="gpt4o" className="bg-black text-white">GPT-4o</option>
 									<option value="ollama" className="bg-black text-white">Ollama</option>
 								</select>
-								<ChevronDown className="w-4 h-4 absolute top-3.5 right-3 text-white/60 "/>
+								<ChevronDown className="w-4 h-4 absolute top-3.5 right-3 text-white/60 " />
 							</div>
-							
+
 						</div>
 
 						<div>
