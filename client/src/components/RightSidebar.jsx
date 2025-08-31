@@ -1,4 +1,4 @@
-import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye,  EyeClosed, Bot } from 'lucide-react';
+import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye,  EyeClosed, Bot, Info, Brain } from 'lucide-react';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModelContext } from '../context/ModelContext.jsx';
@@ -38,7 +38,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const { setModel, setKey, setOllamaModel, setTemp, setTopK, setTopP, temp, topK, topP } = useModelContext()
+	const { setModel, setKey, setOllamaModel, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP } = useModelContext()
 
 
 	const handleSecretInput = (key) => {
@@ -88,34 +88,35 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 							</div>
 
 						</div>
-
-						<div>
-							<label
-								htmlFor="apiKey"
-								className="flex items-center gap-2 px-1 text-white"
-							>
-								Secret
-								<LockKeyhole className="w-4 h-4 text-white/60" />
-							</label>
-							<div className="relative group">
-								<input
-									id="apiKey"
-									type={showSecret ? "text" : "password"}
-									onChange={(e) => handleSecretInput(e.target.value)}
-									placeholder="Enter your API key"
-									className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
-								/>
-								{!isSecretInputEmpty && <button
-									type="button"
-									onClick={() => setShowSecret(!showSecret)}
-									className="absolute inset-y-4 top-0 right-3 flex items-center text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+						{provider !== 'ollama' && (
+							<div>
+								<label
+									htmlFor="apiKey"
+									className="flex items-center gap-2 px-1 text-white"
 								>
-									{showSecret ? <EyeClosed className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-								</button>
-								}
+									Secret
+									<LockKeyhole className="w-4 h-4 text-white/60" />
+								</label>
+								<div className="relative group">
+									<input
+										id="apiKey"
+										type={showSecret ? "text" : "password"}
+										onChange={(e) => handleSecretInput(e.target.value)}
+										placeholder="Enter your API key"
+										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+									/>
+									{!isSecretInputEmpty && <button
+										type="button"
+										onClick={() => setShowSecret(!showSecret)}
+										className="absolute inset-y-4 top-0 right-3 flex items-center text-white/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+									>
+										{showSecret ? <EyeClosed className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+									</button>
+									}
+								</div>
 							</div>
-						</div>
-
+						)}
+						
 						{provider === 'ollama' && (
 							<div>
 								<label
@@ -123,14 +124,43 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									className="flex items-center gap-2 px-1 text-white"
 								>
 									Model
-									<Bot className="w-4 h-4 text-white/60" />
+									<Brain className="w-4 h-4 text-white/60" />
 								</label>
+								<p className=" text-white/50 text-xs mt-1 mb-2 px-1">Choose the model name installed in your Ollama setup (e.g. llama3.2, etc.)</p>
 								<div className="relative group">
 									<input
 										id="ollamaModel"
 										type="text"
 										onChange={(e) => setOllamaModel(e.target.value)}
 										placeholder="Enter model"
+										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
+									/>
+								</div>
+							</div>
+						)}
+
+						{provider === 'ollama' && (
+							<div>
+								<label
+									htmlFor="ollamaPort"
+									className="flex items-center gap-2 px-1 text-white"
+								>
+									Port
+									<Bot className="w-4 h-4 text-white/60" />
+								</label>
+								<p className=" text-white/50 text-xs mt-1 mb-2 px-1">Specify the local port used by the Ollama server (default: 11434).</p>
+								<div className="relative group">
+									<input
+										id="ollamaPort"
+										type="number"
+										onInput={(e) => {
+											if (e.target.value.length > 5) {
+											e.target.value = e.target.value.slice(0, 5);
+											}
+										}}
+										onChange={(e) => setOllamaLocalPort(e.target.value)}
+										placeholder="Enter port"
+										max
 										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
 									/>
 								</div>

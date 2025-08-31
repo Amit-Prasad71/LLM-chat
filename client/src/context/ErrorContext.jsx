@@ -7,12 +7,12 @@ export const useError = () => useContext(ErrorContext);
 
 
 export const ErrorProvider = ({ children }) => {
-    const [isOpen, setIsOpen] = useState(true);
-    const [message, setMessage] = useState('')
+    const [showError, setShowError] = useState(false);
+    const [errMessage, setErrMessage] = useState('')
 
     const value = {
-        isOpen, setIsOpen,
-        message, setMessage
+        showError, setShowError,
+        errMessage, setErrMessage
     }
 
     return (

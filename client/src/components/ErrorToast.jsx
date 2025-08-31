@@ -1,17 +1,17 @@
 import { useEffect } from "react";
 import {CircleAlert} from 'lucide-react'
 
-export default function ErrorToast({ isOpen, onClose, message, duration = 4000 }) {
+export default function ErrorToast({ showError, onClose, errMessage, duration = 4000 }) {
   useEffect(() => {
-    if (isOpen) {
+    if (showError) {
       const timer = setTimeout(() => {
         onClose();
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, onClose, duration]);
+  }, [showError, onClose, duration]);
 
-  if (!isOpen) return null;
+  if (!showError) return null;
 
   return (
   <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
@@ -21,7 +21,7 @@ export default function ErrorToast({ isOpen, onClose, message, duration = 4000 }
           <h2 className="text-sm font-medium text-white/90">Request failed</h2>
         </div>
       </div>
-      <p className="text-sm text-white/70 mt-1">{message}</p>
+      <p className="text-sm text-white/70 mt-1">{errMessage}</p>
     </div>
   </div>
 );

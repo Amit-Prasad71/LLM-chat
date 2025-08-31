@@ -21,11 +21,11 @@ export default function ChatApp() {
 	const [selectedModel, setSelectedModel] = useState({ id: 'gpt-4', name: 'GPT-4' });
 	const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
-	const { model, key } = useModelContext();
-	const {isOpen, message, setIsOpen} = useError();
+	const { model, key, ollamaModel, ollamaLocalPort, temp, topP, topK } = useModelContext();
+	const {showError, errMessage, setShowError, setErrMessage} = useError();
 
 	useEffect(() => {
 		if (chatId) {
@@ -48,7 +48,7 @@ export default function ChatApp() {
 	function createChat(id, timestamp = new Date(), messages = []) {
 		return {
 			id: id,
-			title: `Chat - ${id}`,
+			title: `Chat ${id}`,
 			timestamp,
 			messages,
 		};
@@ -116,14 +116,14 @@ export default function ChatApp() {
 		let requestBody = {
 			messages: messages,
 			max_new_tokens: 1000,
-			temperature: 0.7,
-			top_k: 50,
-			top_p: 0.95,
+			temperature: temp,
+			top_k: topK,
+			top_p: topP,
 			stop_sequence: ["\n"],
 			stream: true,
 			do_sample: true,
 			new: false,
-			model: "llama3.2",
+			model: ollamaModel,
 		}
 
 		const response = await fetch('http://localhost:11434/api/chat', {
@@ -134,11 +134,14 @@ export default function ChatApp() {
 			body: JSON.stringify(requestBody),
 		});
 
-
 		if (!response.body) {
 			throw new Error("ERROR");
 		}
-
+		if(!response.ok) {
+			if(response.status === 404) throw new Error("Model not found. Please enter valid model name")
+			else throw new Error("Something went wrong. Please try again.")
+		}
+		console.log(response)
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder("utf-8");
 
@@ -177,51 +180,22 @@ export default function ChatApp() {
 
 	}
 
-	const makeAPIcall = async (preamble, updatedMessages) => {
+	const validateInput = () => {
+		if(model === '') throw new Error("Please choose a provider")
+		if(model === 'ollama') {
+			if(ollamaModel === '') throw new Error("Please enter local model to proceed")
+		}
+		else if(model === 'deepseek-chat') {
+			if(key === '') throw new Error("Please enter API key to proceed")
+		}
+		return true
+	}
+
+	const makeAPIcall = async (preamble, updatedMessages, currentChatId) => {
 		if (model === "deepseek-chat") {
 			callDeepSeekApi(updatedMessages)
 		} else if (model === "ollama") {
-			callApi([preamble, ...updatedMessages])
-		}
-	}
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		if (loading) return;
-		if (!input.trim()) return;
-
-		let isNewChat = messages.length === 0;
-		let updatedMessages = [...messages];
-		let updatedPreviousChats = [...previousChats];
-
-		if (isNewChat) {
-			const newChat = createChat((previousChats.length + 1).toString());
-			updatedPreviousChats.push(newChat);
-			setPreviousChats([...previousChats, newChat]);
-		}
-
-		let currentChatId = isNewChat ? previousChats.length + 1 : Number(chatId);
-
-		const newMessage = { role: "user", content: input };
-		const assistantMessage = { role: "assistant", content: "" }; // start empty
-
-		updatedMessages.push(newMessage);
-		updatedMessages.push(assistantMessage);
-		setMessages(updatedMessages);
-
-		if (isNewChat) {
-			navigate(`/c/${currentChatId}`);
-		}
-
-		updatedPreviousChats[currentChatId - 1] = {
-			...updatedPreviousChats[currentChatId - 1],
-			messages: updatedMessages,
-		};
-		setPreviousChats(updatedPreviousChats);
-		setInput("");
-		setLoading(true);
-
-		try {
 			await callStreamApi([preamble, ...updatedMessages], (chunk) => {
 				setMessages((prev) => {
 					const newMessages = [...prev]
@@ -254,18 +228,63 @@ export default function ChatApp() {
 					return newChats;
 				});
 			});
+		}
+	}
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		if (loading) return;
+		if (!input.trim()) return;
+		try {
+			if(!validateInput()) return; 
+			let isNewChat = messages.length === 0;
+			let updatedMessages = [...messages];
+			let updatedPreviousChats = [...previousChats];
+
+			if (isNewChat) {
+				const newChat = createChat((previousChats.length + 1).toString());
+				updatedPreviousChats.push(newChat);
+				setPreviousChats([...previousChats, newChat]);
+			}
+
+			let currentChatId = isNewChat ? previousChats.length + 1 : Number(chatId);
+
+			const newMessage = { role: "user", content: input };
+			const assistantMessage = { role: "assistant", content: "" }; // start empty
+
+			updatedMessages.push(newMessage);
+			updatedMessages.push(assistantMessage);
+			setMessages(updatedMessages);
+
+			if (isNewChat) {
+				navigate(`/c/${currentChatId}`);
+			}
+
+			updatedPreviousChats[currentChatId - 1] = {
+				...updatedPreviousChats[currentChatId - 1],
+				messages: updatedMessages,
+			};
+			setPreviousChats(updatedPreviousChats);
+			setInput("");
+			setLoading(true);
+
+			await makeAPIcall(preamble, updatedMessages, currentChatId)
+
 		} catch (err) {
+			setShowError(true);
+			setErrMessage(err.message);
 			setMessages((prev) => {
 				const newMessages = [...prev]
 				const lastIndex = newMessages.length - 1
 
 				const updatedAssistantMessage = {
 					...newMessages[lastIndex],
-					content: "Failed to reach server"
+					content: "Something went wrong. Please try again."
 				}
 				newMessages[lastIndex] = updatedAssistantMessage
 				return newMessages
 			})
+			
 		}
 		setLoading(false)
 	};
@@ -300,7 +319,7 @@ export default function ChatApp() {
 				<ChatMessages messages={messages} loading={loading} />
 				<InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} />
 			</Layout>
-			<ErrorToast isOpen={isOpen} message={message} onClose={() => setIsOpen(false)}/>
+			<ErrorToast showError={showError} errMessage={errMessage} onClose={() => setShowError(false)}/>
 		</div>
 	)
 }

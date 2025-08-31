@@ -1,4 +1,4 @@
-import { ArrowUp, Loader2 } from "lucide-react";
+import { ArrowUp, Loader2, Squircle } from "lucide-react";
 
 function InputForm({ input, setInput, handleSubmit, loading }) {
 	const handleKeyDown = (e) => {
