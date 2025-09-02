@@ -1,0 +1,1 @@
+export const defaultPreamble = 'You are a friendly chatbot'

@@ -10,17 +10,19 @@ export const ModelProvider = ({ children }) => {
     const [ollamaModel, setOllamaModel] = useState('')
     const [ollamaLocalPort, setOllamaLocalPort] = useState(11434)
     const [temp, setTemp] = useState(0.7);
-	const [topP, setTopP] = useState(1);
-	const [topK, setTopK] = useState(50);
+    const [topP, setTopP] = useState(1);
+    const [topK, setTopK] = useState(50);
+    const [preamble, setPreamble] = useState('')
 
     const value = {
-        model,setModel,
-        key,setKey,
-        ollamaModel,setOllamaModel,
+        model, setModel,
+        key, setKey,
+        ollamaModel, setOllamaModel,
         temp, setTemp,
         topP, setTopP,
         topK, setTopK,
-        ollamaLocalPort, setOllamaLocalPort
+        ollamaLocalPort, setOllamaLocalPort,
+        preamble, setPreamble
     };
 
     return (

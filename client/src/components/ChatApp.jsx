@@ -6,14 +6,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useModelContext } from '../context/ModelContext.jsx';
 import { useError } from '../context/ErrorContext.jsx';
 import ErrorToast from './ErrorToast.jsx';
+import * as C from '../constants.js'
 
 export default function ChatApp() {
 
 	const navigate = useNavigate();
-	const preamble = {
-		role: "system",
-		content: "You are a friendly chatbot"
-	}
 
 	const [previousChats, setPreviousChats] = useState([]);
 	const [messages, setMessages] = useState([]);
@@ -24,8 +21,8 @@ export default function ChatApp() {
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
-	const { model, key, ollamaModel, ollamaLocalPort, temp, topP, topK } = useModelContext();
-	const {showError, errMessage, setShowError, setErrMessage} = useError();
+	const { model, key, ollamaModel, ollamaLocalPort, temp, topP, topK, preamble, setPreamble } = useModelContext();
+	const { showError, errMessage, setShowError, setErrMessage } = useError();
 
 	useEffect(() => {
 		if (chatId) {
@@ -85,29 +82,73 @@ export default function ChatApp() {
 
 	}
 
-	const callDeepSeekApi = async (messages) => {
+	const callDeepSeekApi = async (messages, onStreamChunk) => {
+		messages.pop()
+		// console.log('m: ', messages)
+
 		let requestBody = {
 			messages: messages,
-			max_new_tokens: 1000,
-			temperature: 0.7,
+			temperature: temp,
+			stream: true,
 			model: model
 		}
-		try {
-			const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${key}`
-				},
-				body: JSON.stringify(requestBody),
-				redirect: "follow"
-			});
-			const data = await response.json(); // This will parse the response body into JSON.
-			console.log("Response: ", data.response);
-			return data.response;
-		} catch (e) {
-			console.log("Error: ", e);
-			return "ERROR"
+
+		const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${key}`
+			},
+			body: JSON.stringify(requestBody),
+		});
+
+		if (!response.body) {
+			throw new Error("ERROR");
+		}
+		if (!response.ok) {
+			if (response.status === 404) throw new Error("Model not found. Please enter valid model name")
+			else throw new Error("Something went wrong. Please try again.")
+		}
+		console.log(response)
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder("utf-8");
+
+		let buffer = "";
+
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+
+			// split into lines (SSE sends newline-delimited "data: ..." events)
+			const lines = buffer.split("\n");
+			buffer = lines.pop(); // keep last line if incomplete
+
+			for (const line of lines) {
+				if (!line.trim()) continue;
+
+				if (line.startsWith("data: ")) {
+					const payload = line.replace(/^data: /, "").trim();
+
+					// End of stream
+					if (payload === "[DONE]") {
+						return;
+					}
+
+					try {
+						const data = JSON.parse(payload);
+
+						const delta = data.choices?.[0]?.delta?.content;
+						if (delta) {
+							onStreamChunk(delta);
+						}
+					} catch (err) {
+						console.error("JSON parse error:", err, payload);
+						continue;
+					}
+				}
+			}
 		}
 
 	}
@@ -137,8 +178,8 @@ export default function ChatApp() {
 		if (!response.body) {
 			throw new Error("ERROR");
 		}
-		if(!response.ok) {
-			if(response.status === 404) throw new Error("Model not found. Please enter valid model name")
+		if (!response.ok) {
+			if (response.status === 404) throw new Error("Model not found. Please enter valid model name")
 			else throw new Error("Something went wrong. Please try again.")
 		}
 		console.log(response)
@@ -181,19 +222,53 @@ export default function ChatApp() {
 	}
 
 	const validateInput = () => {
-		if(model === '') throw new Error("Please choose a provider")
-		if(model === 'ollama') {
-			if(ollamaModel === '') throw new Error("Please enter local model to proceed")
+		if (model === '') throw new Error("Please choose a provider")
+		if (model === 'ollama') {
+			if (ollamaModel === '') throw new Error("Please enter local model to proceed")
 		}
-		else if(model === 'deepseek-chat') {
-			if(key === '') throw new Error("Please enter API key to proceed")
+		else if (model === 'deepseek-chat') {
+			if (key === '') throw new Error("Please enter API key to proceed")
 		}
 		return true
 	}
 
 	const makeAPIcall = async (preamble, updatedMessages, currentChatId) => {
 		if (model === "deepseek-chat") {
-			callDeepSeekApi(updatedMessages)
+
+			await callDeepSeekApi([preamble, ...updatedMessages], (chunk) => {
+				setMessages((prev) => {
+					const newMessages = [...prev]
+					const lastIndex = newMessages.length - 1
+
+					const updatedAssistantMessage = {
+						...newMessages[lastIndex],
+						content: newMessages[lastIndex].content + chunk,
+					}
+					newMessages[lastIndex] = updatedAssistantMessage
+					return newMessages
+				})
+
+
+				setPreviousChats((prevChats) => {
+					const newChats = [...prevChats];
+					const chatIndex = currentChatId - 1;
+
+					newChats[chatIndex] = {
+						...newChats[chatIndex],
+						messages: [
+							...newChats[chatIndex].messages.slice(0, -1),
+							{
+								...newChats[chatIndex].messages.at(-1),
+								content: newChats[chatIndex].messages.at(-1).content + chunk,
+							},
+						],
+					};
+
+					return newChats;
+				});
+			});
+
+			// callDeepSeekApi(updatedMessages)
 		} else if (model === "ollama") {
 
 			await callStreamApi([preamble, ...updatedMessages], (chunk) => {
@@ -236,7 +311,7 @@ export default function ChatApp() {
 		if (loading) return;
 		if (!input.trim()) return;
 		try {
-			if(!validateInput()) return; 
+			if (!validateInput()) return;
 			let isNewChat = messages.length === 0;
 			let updatedMessages = [...messages];
 			let updatedPreviousChats = [...previousChats];
@@ -268,7 +343,12 @@ export default function ChatApp() {
 			setInput("");
 			setLoading(true);
 
-			await makeAPIcall(preamble, updatedMessages, currentChatId)
+			const systemMessage = {
+				role: "system",
+				content: preamble ? preamble : C.defaultPreamble
+			}
+
+			await makeAPIcall(systemMessage, updatedMessages, currentChatId)
 
 		} catch (err) {
 			setShowError(true);
@@ -284,7 +364,7 @@ export default function ChatApp() {
 				newMessages[lastIndex] = updatedAssistantMessage
 				return newMessages
 			})
-			
+
 		}
 		setLoading(false)
 	};
@@ -319,7 +399,7 @@ export default function ChatApp() {
 				<ChatMessages messages={messages} loading={loading} />
 				<InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} />
 			</Layout>
-			<ErrorToast showError={showError} errMessage={errMessage} onClose={() => setShowError(false)}/>
+			<ErrorToast showError={showError} errMessage={errMessage} onClose={() => setShowError(false)} />
 		</div>
 	)
 }

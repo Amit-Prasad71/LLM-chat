@@ -1,4 +1,4 @@
-import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye,  EyeClosed, Bot, Info, Brain } from 'lucide-react';
+import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeClosed, Bot, Info, Brain } from 'lucide-react';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModelContext } from '../context/ModelContext.jsx';
@@ -32,13 +32,13 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 		},
 	}
 
-	
+
 	const [provider, setProvider] = useState("");
 	const [showSecret, setShowSecret] = useState(false)
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const { setModel, setKey, setOllamaModel, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP } = useModelContext()
+	const { setModel, setKey, setOllamaModel, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP, preamble, setPreamble } = useModelContext()
 
 
 	const handleSecretInput = (key) => {
@@ -116,7 +116,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								</div>
 							</div>
 						)}
-						
+
 						{provider === 'ollama' && (
 							<div>
 								<label
@@ -155,7 +155,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 										type="number"
 										onInput={(e) => {
 											if (e.target.value.length > 5) {
-											e.target.value = e.target.value.slice(0, 5);
+												e.target.value = e.target.value.slice(0, 5);
 											}
 										}}
 										onChange={(e) => setOllamaLocalPort(e.target.value)}
@@ -201,9 +201,6 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									transition={{ duration: 0.5 }}
 									className="overflow-hidden"
 								>
-									{provider === '' && (
-										<p className={`${!isSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/70 px-4 text-xs`}>Select a provider to acces</p>
-									)}
 
 									{providerOptions[provider].preamble && (
 										<motion.div
@@ -220,6 +217,8 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 											<textarea
 												id="preamble"
 												type="text"
+												value={preamble}
+												onChange={(e) => setPreamble(e.target.value)}
 												placeholder="Initial instructions here..."
 												className="w-full px-4 py-2 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30 custom-scrollbar-hide"
 												style={{ minHeight: "20px", maxHeight: "120px", overflowY: "auto" }}
@@ -286,7 +285,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 											exit={{ opacity: 0, y: 10 }}
 											transition={{ duration: 0.2 }}
 										>
-											
+
 											<div className='flex justify-between'>
 												<label htmlFor="topK_slider" className="text-white/80 mb-2 text-sm">TopK</label>
 												<p className='text-white/80 mb-2 text-sm'>{topK}</p>
