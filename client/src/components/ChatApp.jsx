@@ -83,8 +83,6 @@ export default function ChatApp() {
 	}
 
 	const callDeepSeekApi = async (messages, onStreamChunk) => {
-		messages.pop()
-		// console.log('m: ', messages)
 
 		let requestBody = {
 			messages: messages,
@@ -348,7 +346,11 @@ export default function ChatApp() {
 				content: preamble ? preamble : C.defaultPreamble
 			}
 
-			await makeAPIcall(systemMessage, updatedMessages, currentChatId)
+			//sent as request to API
+			let messageBody = [...updatedMessages]
+			messageBody.pop()
+
+			await makeAPIcall(systemMessage, messageBody, currentChatId)
 
 		} catch (err) {
 			setShowError(true);

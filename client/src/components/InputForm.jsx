@@ -1,15 +1,17 @@
-import { ArrowUp, Loader2, Squircle } from "lucide-react";
+import { ArrowUp, Loader2, Squircle, Square } from "lucide-react";
 
 function InputForm({ input, setInput, handleSubmit, loading }) {
-	const handleKeyDown = (e) => {
-		if (e.key === "Enter" && !e.shiftKey) {
-			e.preventDefault();
-			handleSubmit(e);
-		}
-	}
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  }
 
-	return (
-		<div className="border-t border-white/10 bg-black p-4">
+  let isButtonDisabled = !input.trim() && !loading
+
+  return (
+    <div className="border-t border-white/10 bg-black p-4">
       <div className="max-w-4xl mx-auto">
         <form
           onSubmit={(e) => e.preventDefault()}
@@ -33,19 +35,18 @@ function InputForm({ input, setInput, handleSubmit, loading }) {
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={loading || !input.trim()}
-            className="bg-white text-black rounded-full p-2 hover:bg-white/90 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${isButtonDisabled ? "bg-white/50" : "bg-white"} text-black rounded-full p-2 hover:bg-white/90 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {!loading ? (
               <ArrowUp className="w-5 h-5" />
             ) : (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Square className="w-4 h-4" fill="currentColor" />
             )}
           </button>
         </form>
       </div>
     </div>
-	);
+  );
 }
 
 export default InputForm;
