@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Layout from './Layout.jsx';
 import ChatMessages from './ChatMessages.jsx';
 import InputForm from './InputForm.jsx';
@@ -23,6 +23,8 @@ export default function ChatApp() {
 	const { chatId } = useParams();
 	const { model, key, ollamaModel, ollamaLocalPort, temp, topP, topK, preamble, setPreamble } = useModelContext();
 	const { showError, errMessage, setShowError, setErrMessage } = useError();
+
+	const abortControllerRef = useRef(null)
 
 	useEffect(() => {
 		if (chatId) {
@@ -51,38 +53,7 @@ export default function ChatApp() {
 		};
 	}
 
-	const callApi = async (messages) => {
-		let requestBody = {
-			messages: messages,
-			max_new_tokens: 1000,
-			temperature: 0.7,
-			top_k: 50,
-			top_p: 0.95,
-			stop_sequence: ["\n"],
-			stream: false,
-			do_sample: true,
-			new: false,
-			model: "llama3.2"
-		}
-		try {
-			const response = await fetch('http://localhost:11434/api/chat', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(requestBody),
-			});
-			const data = await response.json(); // This will parse the response body into JSON.
-			console.log("Response: ", data);
-			return data;
-		} catch (e) {
-			console.log("Error: ", e);
-			return "ERROR"
-		}
-
-	}
-
-	const callDeepSeekApi = async (messages, onStreamChunk) => {
+	const callDeepSeekApi = async (messages, abortController, onStreamChunk) => {
 
 		let requestBody = {
 			messages: messages,
@@ -98,6 +69,7 @@ export default function ChatApp() {
 				'Authorization': `Bearer ${key}`
 			},
 			body: JSON.stringify(requestBody),
+			signal: abortController.signal
 		});
 
 		if (!response.body) {
@@ -107,7 +79,6 @@ export default function ChatApp() {
 			if (response.status === 404) throw new Error("Model not found. Please enter valid model name")
 			else throw new Error("Something went wrong. Please try again.")
 		}
-		console.log(response)
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder("utf-8");
 
@@ -142,7 +113,6 @@ export default function ChatApp() {
 							onStreamChunk(delta);
 						}
 					} catch (err) {
-						console.error("JSON parse error:", err, payload);
 						continue;
 					}
 				}
@@ -150,7 +120,8 @@ export default function ChatApp() {
 		}
 
 	}
-	const callStreamApi = async (messages, onStreamChunk) => {
+
+	const callOllamaApi = async (messages, abortController, onStreamChunk) => {
 
 		let requestBody = {
 			messages: messages,
@@ -171,6 +142,7 @@ export default function ChatApp() {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify(requestBody),
+			signal: abortController.signal //hook abort controller
 		});
 
 		if (!response.body) {
@@ -180,7 +152,7 @@ export default function ChatApp() {
 			if (response.status === 404) throw new Error("Model not found. Please enter valid model name")
 			else throw new Error("Something went wrong. Please try again.")
 		}
-		console.log(response)
+
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder("utf-8");
 
@@ -203,7 +175,6 @@ export default function ChatApp() {
 				try {
 					data = JSON.parse(line);
 				} catch (err) {
-					console.error("JSON parse error:", err, line);
 					continue;
 				}
 
@@ -230,10 +201,10 @@ export default function ChatApp() {
 		return true
 	}
 
-	const makeAPIcall = async (preamble, updatedMessages, currentChatId) => {
+	const makeAPIcall = async (preamble, updatedMessages, currentChatId, abortController) => {
 		if (model === "deepseek-chat") {
 
-			await callDeepSeekApi([preamble, ...updatedMessages], (chunk) => {
+			await callDeepSeekApi([preamble, ...updatedMessages], abortController, (chunk) => {
 				setMessages((prev) => {
 					const newMessages = [...prev]
 					const lastIndex = newMessages.length - 1
@@ -266,10 +237,9 @@ export default function ChatApp() {
 				});
 			});
 
-			// callDeepSeekApi(updatedMessages)
 		} else if (model === "ollama") {
 
-			await callStreamApi([preamble, ...updatedMessages], (chunk) => {
+			await callOllamaApi([preamble, ...updatedMessages], abortController, (chunk) => {
 				setMessages((prev) => {
 					const newMessages = [...prev]
 					const lastIndex = newMessages.length - 1
@@ -304,8 +274,10 @@ export default function ChatApp() {
 		}
 	}
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
+	const handleSubmit = async () => {
+		const abortController = new AbortController();
+		abortControllerRef.current = abortController;
+
 		if (loading) return;
 		if (!input.trim()) return;
 		try {
@@ -350,26 +322,43 @@ export default function ChatApp() {
 			let messageBody = [...updatedMessages]
 			messageBody.pop()
 
-			await makeAPIcall(systemMessage, messageBody, currentChatId)
+			await makeAPIcall(systemMessage, messageBody, currentChatId, abortController)
 
 		} catch (err) {
 			setShowError(true);
-			setErrMessage(err.message);
-			setMessages((prev) => {
-				const newMessages = [...prev]
-				const lastIndex = newMessages.length - 1
+			const errorMessage = err.name === "AbortError" ? "Aborted by user" : err.message
+			setErrMessage(errorMessage);
+			let currentChatId = messages.length === 0 ? previousChats.length + 1 : Number(chatId);
 
-				const updatedAssistantMessage = {
-					...newMessages[lastIndex],
-					content: "Something went wrong. Please try again."
-				}
-				newMessages[lastIndex] = updatedAssistantMessage
-				return newMessages
-			})
+			setPreviousChats((prevChats) => {
+				const newChats = [...prevChats];
+				const chatIndex = currentChatId - 1;
+
+				newChats[chatIndex] = {
+					...newChats[chatIndex],
+					messages: [
+						...newChats[chatIndex].messages.slice(0, -1),
+						{
+							...newChats[chatIndex].messages.at(-1),
+							content: "Something went wrong. Please try again.",
+						},
+					],
+				};
+
+				return newChats;
+			});
 
 		}
 		setLoading(false)
+		abortControllerRef.current = null
 	};
+
+	const handleStop = () => {
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort();
+			setLoading(false);
+		}
+	}
 
 	const onChatSelect = (chatId) => {
 		navigate(`/c/${chatId}`);
@@ -399,7 +388,7 @@ export default function ChatApp() {
 				onChatSelect={onChatSelect}
 			>
 				<ChatMessages messages={messages} loading={loading} />
-				<InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} />
+				<InputForm input={input} setInput={setInput} handleSubmit={handleSubmit} loading={loading} handleStop={handleStop} />
 			</Layout>
 			<ErrorToast showError={showError} errMessage={errMessage} onClose={() => setShowError(false)} />
 		</div>

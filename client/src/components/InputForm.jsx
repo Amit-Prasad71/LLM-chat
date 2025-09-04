@@ -1,11 +1,16 @@
 import { ArrowUp, Loader2, Squircle, Square } from "lucide-react";
 
-function InputForm({ input, setInput, handleSubmit, loading }) {
+function InputForm({ input, setInput, handleSubmit, handleStop, loading }) {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
+  }
+
+  const handleInputFormSubmit = (e) => {
+    e.preventDefault();
+    loading ? handleStop() : handleSubmit()
   }
 
   let isButtonDisabled = !input.trim() && !loading
@@ -34,7 +39,7 @@ function InputForm({ input, setInput, handleSubmit, loading }) {
           />
           <button
             type="submit"
-            onClick={handleSubmit}
+            onClick={handleInputFormSubmit}
             className={`${isButtonDisabled ? "bg-white/50" : "bg-white"} text-black rounded-full p-2 hover:bg-white/90 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {!loading ? (
