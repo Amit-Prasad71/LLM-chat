@@ -15,7 +15,7 @@ export default function ChatApp() {
 	const [previousChats, setPreviousChats] = useState([]);
 	const [messages, setMessages] = useState([]);
 	const [input, setInput] = useState('');
-	const [selectedModel, setSelectedModel] = useState({ id: 'gpt-4', name: 'GPT-4' });
+	const [selectedModel, setSelectedModel] = useState({});
 	const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);

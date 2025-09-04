@@ -23,13 +23,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 			'topK': true,
 			'topP': true,
 			'temp': true
-		},
-		'gpt4o': {
-			'preamble': true,
-			'topK': true,
-			'topP': true,
-			'temp': true
-		},
+		}
 	}
 
 
@@ -81,7 +75,6 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								>
 									<option value="" disabled hidden className='text-white/50'>Select a provider</option>
 									<option value="deepseek-chat" className="bg-black text-white">Deepseek </option>
-									<option value="gpt4o" className="bg-black text-white">GPT-4o</option>
 									<option value="ollama" className="bg-black text-white">Ollama</option>
 								</select>
 								<ChevronDown className="w-4 h-4 absolute top-3.5 right-3 text-white/60 " />
@@ -126,7 +119,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									Model
 									<Brain className="w-4 h-4 text-white/60" />
 								</label>
-								<p className=" text-white/50 text-xs mt-1 mb-2 px-1">Choose the model name installed in your Ollama setup (e.g. llama3.2, etc.)</p>
+								<p className={`${!isRightSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/50 text-xs mt-1 mb-2 px-1`}>Choose the model name installed in your Ollama setup (e.g. llama3.2, etc.)</p>
 								<div className="relative group">
 									<input
 										id="ollamaModel"
@@ -148,7 +141,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									Port
 									<Bot className="w-4 h-4 text-white/60" />
 								</label>
-								<p className=" text-white/50 text-xs mt-1 mb-2 px-1">Specify the local port used by the Ollama server (default: 11434).</p>
+								<p className={`${!isRightSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/50 text-xs mt-1 mb-2 px-1`}>Specify the local port used by the Ollama server (default: 11434).</p>
 								<div className="relative group">
 									<input
 										id="ollamaPort"
@@ -160,7 +153,6 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 										}}
 										onChange={(e) => setOllamaLocalPort(e.target.value)}
 										placeholder="Enter port"
-										max
 										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
 									/>
 								</div>
