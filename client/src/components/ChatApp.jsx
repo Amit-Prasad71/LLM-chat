@@ -191,12 +191,21 @@ export default function ChatApp() {
 	}
 
 	const validateInput = () => {
-		if (model === '') throw new Error("Please choose a provider")
-		if (model === 'ollama') {
-			if (ollamaModel === '') throw new Error("Please enter local model to proceed")
+
+		const error = new Error('')
+		error.code = 'INVALID_INPUT'
+
+		if (model === '') {
+			error.message = C.VALIDATION_MSG.NO_PROVIDER
+			throw error
 		}
-		else if (model === 'deepseek-chat') {
-			if (key === '') throw new Error("Please enter API key to proceed")
+		else if (model === 'ollama' && ollamaModel === '') {
+			error.message = C.VALIDATION_MSG.NO_LOCAL_MODEL
+			throw error
+		}
+		else if (model === 'deepseek-chat' && key === '') {
+			error.message = C.VALIDATION_MSG.NO_SECRET
+			throw error
 		}
 		return true
 	}
@@ -315,7 +324,7 @@ export default function ChatApp() {
 
 			const systemMessage = {
 				role: "system",
-				content: preamble ? preamble : C.defaultPreamble
+				content: preamble ? preamble : C.DEFAULT_PREAMBLE
 			}
 
 			//sent as request to API
@@ -328,26 +337,28 @@ export default function ChatApp() {
 			setShowError(true);
 			const errorMessage = err.name === "AbortError" ? "Aborted by user" : err.message
 			setErrMessage(errorMessage);
-			let currentChatId = messages.length === 0 ? previousChats.length + 1 : Number(chatId);
+			const currentChatId = messages.length === 0 ? previousChats.length + 1 : Number(chatId);
+			const isInputValidationError = err.code && err.code === 'INVALID_INPUT'
 
-			setPreviousChats((prevChats) => {
-				const newChats = [...prevChats];
-				const chatIndex = currentChatId - 1;
+			if (!isInputValidationError) {
+				setPreviousChats((prevChats) => {
+					const newChats = [...prevChats];
+					const chatIndex = currentChatId - 1;
 
-				newChats[chatIndex] = {
-					...newChats[chatIndex],
-					messages: [
-						...newChats[chatIndex].messages.slice(0, -1),
-						{
-							...newChats[chatIndex].messages.at(-1),
-							content: "Something went wrong. Please try again.",
-						},
-					],
-				};
+					newChats[chatIndex] = {
+						...newChats[chatIndex],
+						messages: [
+							...newChats[chatIndex].messages.slice(0, -1),
+							{
+								...newChats[chatIndex].messages.at(-1),
+								content: "Something went wrong. Please try again.",
+							},
+						],
+					};
 
-				return newChats;
-			});
-
+					return newChats;
+				});
+			}
 		}
 		setLoading(false)
 		abortControllerRef.current = null
@@ -365,11 +376,28 @@ export default function ChatApp() {
 	}
 
 	const formatDate = (date) => {
-		return new Intl.DateTimeFormat('en-US', {
-			month: 'short',
-			day: 'numeric',
+		const now = new Date();
+
+		const isToday =
+			date.getDate() === now.getDate() &&
+			date.getMonth() === now.getMonth() &&
+			date.getFullYear() === now.getFullYear();
+
+		if (isToday) {
+			// Show time instead
+			return new Intl.DateTimeFormat("en-US", {
+				hour: "numeric",
+				minute: "numeric",
+			}).format(date);
+		}
+
+		// Default: Month + Day
+		return new Intl.DateTimeFormat("en-US", {
+			month: "short",
+			day: "numeric",
 		}).format(date);
 	};
+
 
 	return (
 		<div className='bg-black'>

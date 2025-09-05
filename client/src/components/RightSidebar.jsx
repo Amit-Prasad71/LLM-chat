@@ -1,4 +1,4 @@
-import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeClosed, Bot, Info, Brain } from 'lucide-react';
+import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeClosed, Bot, Info, Brain, Anchor } from 'lucide-react';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModelContext } from '../context/ModelContext.jsx';
@@ -139,7 +139,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 									className="flex items-center gap-2 px-1 text-white"
 								>
 									Port
-									<Bot className="w-4 h-4 text-white/60" />
+									<Anchor className="w-4 h-4 text-white/60" />
 								</label>
 								<p className={`${!isRightSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/50 text-xs mt-1 mb-2 px-1`}>Specify the local port used by the Ollama server (default: 11434).</p>
 								<div className="relative group">
