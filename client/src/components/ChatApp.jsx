@@ -21,7 +21,7 @@ export default function ChatApp() {
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
-	const { model, key, temp, topP, topK, preamble, provider } = useModelContext();
+	const { model, key, temp, topP, topK, preamble, provider, ollamaLocalPort } = useModelContext();
 	const { showError, errMessage, setShowError, setErrMessage } = useError();
 
 	const abortControllerRef = useRef(null)
@@ -50,8 +50,9 @@ export default function ChatApp() {
 	}
 
 	const handleNewChat = () => {
-		setLoading(false)
-		setMessages([])
+		if (loading) {
+			handleStop()
+		}
 		navigate("/");
 	};
 
@@ -147,7 +148,10 @@ export default function ChatApp() {
 			model: model,
 		}
 
-		const response = await fetch('http://localhost:11434/api/chat', {
+		const port = ollamaLocalPort ? ollamaLocalPort : C.DEFAULT_PORT_OLLAMA
+		const requestURL = `http://localhost:${port}/api/chat`
+
+		const response = await fetch(requestURL, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

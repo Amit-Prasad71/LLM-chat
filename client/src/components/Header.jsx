@@ -36,7 +36,7 @@ function Header({
 
 				<div className="flex items-center space-x-3">
 
-					{!isRightSidebarOpen && <a href={`${C.GITHUB_URL}`} target='_blank'><FaGithub size={20} className='text-white' /></a>}
+					{!isRightSidebarOpen && <a href={`${C.GITHUB_REPO_URL}`} target='_blank'><FaGithub size={20} className='text-white' /></a>}
 
 					{!isRightSidebarOpen && (
 						<button

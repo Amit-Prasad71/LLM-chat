@@ -7,7 +7,7 @@ export const VALIDATION_MSG = {
 
 export const PROVIDER_OPTIONS = {
 	'': {},
-	'deepseek-chat': {
+	'deepseek': {
 		'preamble': true,
 		'topK': true,
 		'topP': true,
@@ -47,3 +47,5 @@ export const PREAMBLES = {
 						- When uncertain, state assumptions instead of guessing.
 						`,
 }
+
+export const DEFAULT_PORT_OLLAMA = '11434' 

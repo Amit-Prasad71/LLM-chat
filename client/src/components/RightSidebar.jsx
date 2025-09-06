@@ -11,7 +11,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const { setModel, setKey, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP, preamble, setPreamble, provider, setProvider } = useModelContext()
+	const { setModel, setKey, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP, preamble, setPreamble, provider, setProvider, key, model, ollamaLocalPort } = useModelContext()
 
 
 	const handleSecretInput = (key) => {
@@ -26,6 +26,12 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 			default: return C.MODEL_FIELD_DESC.DEFAULT
 		}
 	}
+
+	useEffect(() => {
+		setModel('')
+		setKey('')
+		setOllamaLocalPort('')
+	}, [provider])
 
 	return (
 		<div className={`${isRightSidebarOpen ? 'w-80' : 'w-0'} bg-black border-l border-white/10 transition-all duration-300 overflow-hidden`}>
@@ -75,6 +81,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								<div className="relative group">
 									<input
 										id="apiKey"
+										value={key}
 										type={showSecret ? "text" : "password"}
 										onChange={(e) => handleSecretInput(e.target.value)}
 										placeholder="Enter your API key"
@@ -105,6 +112,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								<div className="relative group">
 									<input
 										id="model"
+										value={model}
 										type="text"
 										onChange={(e) => setModel(e.target.value)}
 										placeholder="Enter model"
@@ -133,6 +141,7 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 												e.target.value = e.target.value.slice(0, 5);
 											}
 										}}
+										value={ollamaLocalPort}
 										onChange={(e) => setOllamaLocalPort(e.target.value)}
 										placeholder="Enter port"
 										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
