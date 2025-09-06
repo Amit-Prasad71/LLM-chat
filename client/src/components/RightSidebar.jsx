@@ -1,38 +1,17 @@
-import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeClosed, Bot, Info, Brain, Anchor } from 'lucide-react';
-import { useState } from "react";
+import { X, LockKeyhole, Box, Book, ChevronUp, ChevronDown, Eye, EyeClosed, Brain, Anchor } from 'lucide-react';
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModelContext } from '../context/ModelContext.jsx';
+import * as C from '../constants.js'
 
 function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 
-	const providerOptions = {
-		'': {
-			'preamble': false,
-			'topK': false,
-			'topP': false,
-			'temp': false
-		},
-		'deepseek-chat': {
-			'preamble': true,
-			'topK': true,
-			'topP': true,
-			'temp': true
-		},
-		'ollama': {
-			'preamble': true,
-			'topK': true,
-			'topP': true,
-			'temp': true
-		}
-	}
-
-
-	const [provider, setProvider] = useState("");
+	const providerOptions = C.PROVIDER_OPTIONS
 	const [showSecret, setShowSecret] = useState(false)
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [isSecretInputEmpty, setIsSecretInputEmpty] = useState(true)
-	const { setModel, setKey, setOllamaModel, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP, preamble, setPreamble } = useModelContext()
+	const { setModel, setKey, setOllamaLocalPort, setTemp, setTopK, setTopP, temp, topK, topP, preamble, setPreamble, provider, setProvider } = useModelContext()
 
 
 	const handleSecretInput = (key) => {
@@ -40,9 +19,12 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 		setKey(key)
 	}
 
-	const handleProvider = (provider) => {
-		setProvider(provider)
-		setModel(provider)
+	const getModelDesc = (provider) => {
+		switch (provider) {
+			case 'ollama': return C.MODEL_FIELD_DESC.OLLAMA
+			case 'deepseek': return C.MODEL_FIELD_DESC.DEEPSEEK
+			default: return C.MODEL_FIELD_DESC.DEFAULT
+		}
 	}
 
 	return (
@@ -70,11 +52,11 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 								<select
 									id="llm-provider"
 									value={provider}
-									onChange={(e) => handleProvider(e.target.value)}
+									onChange={(e) => setProvider(e.target.value)}
 									className={`appearance-none px-3 py-2 pr-8 w-full bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors ${provider === "" ? 'text-gray-400' : 'text-white'}`}
 								>
 									<option value="" disabled hidden className='text-white/50'>Select a provider</option>
-									<option value="deepseek-chat" className="bg-black text-white">Deepseek </option>
+									<option value="deepseek" className="bg-black text-white">Deepseek </option>
 									<option value="ollama" className="bg-black text-white">Ollama</option>
 								</select>
 								<ChevronDown className="w-4 h-4 absolute top-3.5 right-3 text-white/60 " />
@@ -110,21 +92,21 @@ function RightSidebar({ isRightSidebarOpen, setIsRightSidebarOpen }) {
 							</div>
 						)}
 
-						{provider === 'ollama' && (
+						{provider !== '' && (
 							<div>
 								<label
-									htmlFor="ollamaModel"
+									htmlFor="model"
 									className="flex items-center gap-2 px-1 text-white"
 								>
 									Model
 									<Brain className="w-4 h-4 text-white/60" />
 								</label>
-								<p className={`${!isRightSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/50 text-xs mt-1 mb-2 px-1`}>Choose the model name installed in your Ollama setup (e.g. llama3.2, etc.)</p>
+								<p className={`${!isRightSidebarOpen && 'whitespace-nowrap overflow-hidden text-ellipsis'} text-white/50 text-xs mt-1 mb-2 px-1`}>{getModelDesc(provider)}</p>
 								<div className="relative group">
 									<input
-										id="ollamaModel"
+										id="model"
 										type="text"
-										onChange={(e) => setOllamaModel(e.target.value)}
+										onChange={(e) => setModel(e.target.value)}
 										placeholder="Enter model"
 										className="w-full px-4 py-2 pr-10 mb-4 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-white/30"
 									/>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, Bot, Plus, ChevronDown, Bolt } from 'lucide-react';
 import { FaGithub } from "react-icons/fa";
+import * as C from '../constants'
 
 function Header({
 	isSidebarOpen,
@@ -35,7 +36,7 @@ function Header({
 
 				<div className="flex items-center space-x-3">
 
-					{!isRightSidebarOpen && <a href="#"><FaGithub size={20} className='text-white' /></a>}
+					{!isRightSidebarOpen && <a href={`${C.GITHUB_URL}`} target='_blank'><FaGithub size={20} className='text-white' /></a>}
 
 					{!isRightSidebarOpen && (
 						<button

@@ -6,8 +6,22 @@ import "katex/dist/katex.min.css"; // import KaTeX styles
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useModelContext } from "../context/ModelContext.jsx";
+
 
 export default function MarkdownRenderer({ content }) {
+	const { provider, model } = useModelContext()
+
+	function normalizeMath(content) {
+		return content
+			// Replace block [ ... ] with $$ ... $$
+			.replace(/\[\s*([^\]]+)\s*\]/gs, (_, expr) => `$$${expr}$$`);
+	}
+
+	const isNormalizeRequired = () => {
+		return provider === 'deepseek' && (model === 'deepseek-reasoner' || model === 'deepseek-coder')
+	}
+
 	return (
 		<div className="prose prose-invert max-w-none">
 			<ReactMarkdown
@@ -34,7 +48,9 @@ export default function MarkdownRenderer({ content }) {
 					},
 				}}
 			>
-				{content}
+				{
+					isNormalizeRequired() ? normalizeMath(content) : content
+				}
 			</ReactMarkdown>
 		</div>
 	);

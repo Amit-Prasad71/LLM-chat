@@ -5,6 +5,7 @@ const ModelContext = createContext();
 export const useModelContext = () => useContext(ModelContext);
 
 export const ModelProvider = ({ children }) => {
+    const [provider, setProvider] = useState("");
     const [model, setModel] = useState('');
     const [key, setKey] = useState('');
     const [ollamaModel, setOllamaModel] = useState('')
@@ -22,7 +23,8 @@ export const ModelProvider = ({ children }) => {
         topP, setTopP,
         topK, setTopK,
         ollamaLocalPort, setOllamaLocalPort,
-        preamble, setPreamble
+        preamble, setPreamble,
+        provider, setProvider,
     };
 
     return (

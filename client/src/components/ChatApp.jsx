@@ -21,7 +21,7 @@ export default function ChatApp() {
 	const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 	const [loading, setLoading] = useState(false);
 	const { chatId } = useParams();
-	const { model, key, ollamaModel, ollamaLocalPort, temp, topP, topK, preamble, setPreamble } = useModelContext();
+	const { model, key, temp, topP, topK, preamble, provider } = useModelContext();
 	const { showError, errMessage, setShowError, setErrMessage } = useError();
 
 	const abortControllerRef = useRef(null)
@@ -37,6 +37,17 @@ export default function ChatApp() {
 			setMessages([]);
 		}
 	}, [chatId, previousChats]);
+
+	const getDefaultPreamble = (provider, model) => {
+		if (provider === 'deepseek') {
+			if (model === 'deepseek-coder') {
+				return C.PREAMBLES.DEEPSEEK_CODER
+			} else if (model === 'deepseek-reasoner') {
+				return C.PREAMBLES.DEEPSEEK_REASONER
+			}
+		}
+		return C.PREAMBLES.DEFAULT_PREAMBLE
+	}
 
 	const handleNewChat = () => {
 		setLoading(false)
@@ -59,7 +70,7 @@ export default function ChatApp() {
 			messages: messages,
 			temperature: temp,
 			stream: true,
-			model: model
+			model: model || 'deepseek-chat'
 		}
 
 		const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -133,7 +144,7 @@ export default function ChatApp() {
 			stream: true,
 			do_sample: true,
 			new: false,
-			model: ollamaModel,
+			model: model,
 		}
 
 		const response = await fetch('http://localhost:11434/api/chat', {
@@ -195,23 +206,22 @@ export default function ChatApp() {
 		const error = new Error('')
 		error.code = 'INVALID_INPUT'
 
-		if (model === '') {
+		if (provider === '') {
 			error.message = C.VALIDATION_MSG.NO_PROVIDER
 			throw error
 		}
-		else if (model === 'ollama' && ollamaModel === '') {
+		else if (provider === 'ollama' && model === '') {
 			error.message = C.VALIDATION_MSG.NO_LOCAL_MODEL
 			throw error
 		}
-		else if (model === 'deepseek-chat' && key === '') {
+		else if (provider === 'deepseek' && key === '') {
 			error.message = C.VALIDATION_MSG.NO_SECRET
 			throw error
 		}
-		return true
 	}
 
 	const makeAPIcall = async (preamble, updatedMessages, currentChatId, abortController) => {
-		if (model === "deepseek-chat") {
+		if (provider === "deepseek") {
 
 			await callDeepSeekApi([preamble, ...updatedMessages], abortController, (chunk) => {
 				setMessages((prev) => {
@@ -246,7 +256,7 @@ export default function ChatApp() {
 				});
 			});
 
-		} else if (model === "ollama") {
+		} else if (provider === "ollama") {
 
 			await callOllamaApi([preamble, ...updatedMessages], abortController, (chunk) => {
 				setMessages((prev) => {
@@ -290,7 +300,7 @@ export default function ChatApp() {
 		if (loading) return;
 		if (!input.trim()) return;
 		try {
-			if (!validateInput()) return;
+			validateInput();
 			let isNewChat = messages.length === 0;
 			let updatedMessages = [...messages];
 			let updatedPreviousChats = [...previousChats];
@@ -324,7 +334,7 @@ export default function ChatApp() {
 
 			const systemMessage = {
 				role: "system",
-				content: preamble ? preamble : C.DEFAULT_PREAMBLE
+				content: preamble ? preamble : getDefaultPreamble(provider, model)
 			}
 
 			//sent as request to API
